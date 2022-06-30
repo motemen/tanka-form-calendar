@@ -1,0 +1,12 @@
+name = "tanka-form-calendar"
+main = "src/index.ts"
+compatibility_date = "2022-06-28"
+
+kv_namespaces = [
+  { binding = "STORE", id = "b68c2e6b9c1840dfa4dec375adf8d19f", preview_id = "f73a96a186b24d0bb2ce4e7ec146a822" }
+]
+
+node_compat = true
+
+[triggers]
+crons = [ "0 8 * * *" ]

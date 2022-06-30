@@ -1,0 +1,29 @@
+{
+  "name": "tanka-form-calendar",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "author": "Hironao OTSUBO <motemen@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^3.13.0",
+    "@pollyjs/adapter-fetch": "^6.0.5",
+    "@pollyjs/core": "^6.0.5",
+    "@pollyjs/persister-fs": "^6.0.5",
+    "@types/jest": "^28.1.3",
+    "esbuild-jest": "^0.5.0",
+    "jest": "^28.1.1",
+    "jest-environment-miniflare": "^2.5.1",
+    "miniflare": "^2.5.1",
+    "typescript": "^4.7.4",
+    "wrangler": "^2.0.15"
+  },
+  "dependencies": {
+    "date-fns": "^2.28.0",
+    "ical-generator": "^3.4.3"
+  }
+}
