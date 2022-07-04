@@ -3,6 +3,10 @@ import { CrawlResult, SiteBase } from "./base";
 const FORM_URL = "https://www.utalover.com/join/toko/form.html";
 
 export default new (class extends SiteBase {
+  override name = "うたらば";
+
+  override homepage = "https://www.utalover.com/";
+
   override keys(): string[] {
     return [...this.generateKeys("utalover-monthly"), ...this.generateKeys("utalover-freepaper")];
   }

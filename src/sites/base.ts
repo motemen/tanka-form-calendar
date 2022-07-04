@@ -1,6 +1,10 @@
 import addMonths from "date-fns/addMonths";
 
 export abstract class SiteBase {
+  public abstract readonly name: string;
+
+  public abstract readonly homepage: string;
+
   protected generateKey(keyPrefix: string, [year, month]: [number, number, number]): string {
     return `${keyPrefix}:${year}${month.toString().padStart(2, "0")}`;
   }

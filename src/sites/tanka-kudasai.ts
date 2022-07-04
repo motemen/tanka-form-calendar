@@ -4,6 +4,10 @@ import { CrawlResult, SiteBase } from "./base";
 const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdZcsuMp2sRfAgMkB_MWqHsT_zi-Jt9Ed3PyRxZg2fGVPtjhg/viewform";
 
 export default new (class extends SiteBase {
+  override name = "短歌ください";
+
+  override homepage = "https://ddnavi.com/davinci/tanka/";
+
   override keys(): string[] {
     return this.generateKeys("tanka-kudasai");
   }

@@ -13,28 +13,33 @@
 import { SITES } from "./sites";
 import { CrawlResult } from "./sites/base";
 import ical from "ical-generator";
+import { encode } from "html-entities";
 
 export interface Env {
   STORE: KVNamespace;
-  // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
-  // MY_KV_NAMESPACE: KVNamespace;
-  //
-  // Example binding to Durable Object. Learn more at https://developers.cloudflare.com/workers/runtime-apis/durable-objects/
-  // MY_DURABLE_OBJECT: DurableObjectNamespace;
-  //
-  // Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
-  // MY_BUCKET: R2Bucket;
   SECRET_TOKEN: string;
 }
 
-const html = `
-<!DOCTYPE html>
+const html = `<!DOCTYPE html>
+<head>
+  <title>投稿短歌カレンダー</title>
+</head>
 <body>
   <h1>投稿短歌カレンダー</h1>
   <p>インターネットで投稿できる短歌の締め切りを確認できるカレンダーです。</p>
+  <p>現在、以下のサイトに対応しています:</p>
+  <ul>
+  ${SITES.map((site) => `<li><a href="${encode(site.homepage)}" target="_blank">${encode(site.name)}</a></li>`).join(
+    "\n"
+  )}
+  </ul>
   <p>以下のURLをカレンダーアプリなどから利用してください。</p>
   <p><code>https://tanka-form-calendar.motemen.workers.dev/calendar.ics</code></p>
   <p><iframe src="https://calendar.google.com/calendar/embed?src=gmd5lma3ot21h8theu8nqndp4emubcgp%40import.calendar.google.com&ctz=Asia%2FTokyo" style="border: 0" width="800" height="600" frameborder="0" scrolling="no"></iframe></p>
+  <footer>
+    <address>Author: <a href="https://twitter.com/@motemen" target="_blank">@motemen</a></address>
+    <a href="https://github.com/motemen/tanka-form-calendar/issues/new" target="_blank">ご意見ご要望</a>
+  </footer>
 </body>
 `;
 
@@ -66,6 +71,7 @@ export default {
           allDay: true,
           timezone: "Asia/Tokyo",
           url: entry.url,
+          description: entry.url,
         });
       });
 

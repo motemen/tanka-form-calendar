@@ -4,6 +4,10 @@ import { CrawlResult, SiteBase } from "./base";
 const TOP_URL = "https://www.nhk.jp/p/ts/JM12GR5RLP/";
 
 export default new (class extends SiteBase {
+  override name = "NHK短歌";
+
+  override homepage = "https://www.nhk.jp/p/ts/JM12GR5RLP/";
+
   override keys(): string[] {
     return [0, 1, 2, 3].flatMap((i) => this.generateKeys(`nhk-tanka_${i}`));
   }
