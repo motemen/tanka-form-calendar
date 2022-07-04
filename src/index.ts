@@ -48,7 +48,7 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === "/_schedule") {
       if (url.searchParams.get("token") === env.SECRET_TOKEN) {
-        await this.scheduled(null as any, env, ctx);
+        await this.scheduled(null as unknown as ScheduledController, env, ctx);
         return new Response("schedule ran");
       }
 
@@ -93,7 +93,7 @@ export default {
     return new Response("302 Found", { status: 302, headers: { Location: "/" } });
   },
 
-  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+  async scheduled(controller: ScheduledController, env: Env, _ctx: ExecutionContext): Promise<void> {
     const results = await Promise.all(SITES.map((site) => site.crawl()));
     console.debug(results);
     await Promise.all(
