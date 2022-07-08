@@ -46,8 +46,9 @@ const html = `<!DOCTYPE html>
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+    console.log(JSON.stringify(env));
     if (url.pathname === "/_schedule") {
-      if (url.searchParams.get("token") === env.SECRET_TOKEN) {
+      if (url.searchParams.get("key") === env.SECRET_TOKEN) {
         await this.scheduled(null as unknown as ScheduledController, env, ctx);
         return new Response("schedule ran");
       }

@@ -1,5 +1,6 @@
 import { fixupYMD } from "../utils";
 import { CrawlResult, SiteBase } from "./base";
+import { decodeHTML, decodeHTMLStrict } from "entities";
 
 const TOP_URL = "https://www.nhk.jp/p/ts/JM12GR5RLP/";
 
@@ -28,7 +29,7 @@ export default new (class extends SiteBase {
         console.debug(`NHK: crawl ${url}`);
 
         const resp = await fetch(url);
-        const text = await resp.text();
+        const text = await resp.text().then((t) => decodeHTML(t));
 
         const matchHTML = /enquete_data = ({.+});$/m.exec(text);
         if (!matchHTML) {
