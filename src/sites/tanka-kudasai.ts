@@ -1,18 +1,18 @@
-import { fixupYMD } from "../utils";
-import { CrawlResult, SiteBase } from "./base";
+import { computeDigest, fixupYMD } from "../utils";
+import { TankaEvent, TankaSite } from "./base";
 
 const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdZcsuMp2sRfAgMkB_MWqHsT_zi-Jt9Ed3PyRxZg2fGVPtjhg/viewform";
 
-export default new (class extends SiteBase {
-  override name = "短歌ください";
+interface Detail extends Record<string, unknown> {
+  theme: string;
+}
 
-  override homepage = "https://ddnavi.com/davinci/tanka/";
+const 短歌ください: TankaSite<Detail> = {
+  key: "tanka-kudasai",
+  homepage: "https://ddnavi.com/davinci/tanka/",
+  name: "短歌ください",
 
-  override keys(): string[] {
-    return this.generateKeys("tanka-kudasai");
-  }
-
-  override async crawl(): Promise<CrawlResult[]> {
+  async crawl(): Promise<TankaEvent<Detail>[]> {
     const resp = await fetch(FORM_URL);
     const text = (await resp.text()).replace(/<[^>]+>/g, "");
 
@@ -31,12 +31,21 @@ export default new (class extends SiteBase {
 
     return [
       {
-        key: this.generateKey("tanka-kudasai", [year, month, day]),
-        collection: "短歌ください",
+        key: await computeDigest(`${year}-${month}-${day}`),
         date: [year, month, day],
-        theme: themeMatch[1],
-        url: FORM_URL,
+        detail: {
+          theme: themeMatch[1],
+        },
       },
     ];
-  }
-})();
+  },
+
+  eventDetail({ detail }: TankaEvent<Detail>): { title: string; url: string } {
+    return {
+      title: `短歌ください『${detail.theme}』`,
+      url: this.homepage,
+    };
+  },
+};
+
+export default 短歌ください;

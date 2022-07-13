@@ -1,69 +1,83 @@
-import { fixupYMD } from "../utils";
-import { CrawlResult, SiteBase } from "./base";
-import { decodeHTML, decodeHTMLStrict } from "entities";
+import { computeDigest, fixupYMD } from "../utils";
+import { TankaSite, TankaEvent } from "./base";
+import { decodeHTML } from "entities";
 
 const TOP_URL = "https://www.nhk.jp/p/ts/JM12GR5RLP/";
 
-export default new (class extends SiteBase {
-  override name = "NHK短歌";
+interface Detail extends Record<string, unknown> {
+  selector: string;
+  theme: string;
+}
 
-  override homepage = "https://www.nhk.jp/p/ts/JM12GR5RLP/";
+const NHK短歌: TankaSite<Detail> = {
+  key: "nhk-tanka",
+  homepage: TOP_URL,
+  name: "NHK短歌",
 
-  override keys(): string[] {
-    return [0, 1, 2, 3].flatMap((i) => this.generateKeys(`nhk-tanka_${i}`));
-  }
-
-  async crawl(): Promise<CrawlResult[]> {
+  async crawl(): Promise<TankaEvent<Detail>[]> {
     console.debug(`NHK: crawl ${TOP_URL}`);
 
-    const resp = await fetch(TOP_URL);
-    const html = await resp.text();
+    const html = await fetch(TOP_URL).then((r) => r.text());
 
     const matches = html.matchAll(
       /<a href="(https:\/\/forms\.nhk\.or\.jp\/q\/[^"]+)" target="_self">詳しくはこちら<\/a><\/p>/g
     );
 
-    let index = 0;
-    return Promise.all(
-      [...matches].map(async ([, url]): Promise<CrawlResult[]> => {
-        console.debug(`NHK: crawl ${url}`);
+    const buildEvent = async (choice: string): Promise<TankaEvent<Detail>> => {
+      choice = choice.replace(/<[^>]+>/g, "");
 
-        const resp = await fetch(url);
-        const text = await resp.text().then((t) => decodeHTML(t));
+      const match = /^(.+)「(.+?)(?:\s*または自由)?」\s*([0-9]+)\/([0-9]+)/.exec(choice);
+      if (!match) {
+        throw new Error(`Could not match: ${choice}`);
+      }
 
-        const matchHTML = /enquete_data = ({.+});$/m.exec(text);
-        if (!matchHTML) {
-          throw new Error(`Could not find enquete data: ${url}`);
-        }
+      const [, rawSelector, rawTheme, m, d] = match;
+      const selector = decodeHTML(rawSelector).replaceAll(/\s+/g, "");
+      const theme = decodeHTML(rawTheme);
+      const [year, month, day] = fixupYMD(parseInt(m), parseInt(d));
 
-        const enqueteData = JSON.parse(matchHTML[1]);
+      return {
+        key: await computeDigest(`${year}/${month}/${day}/${selector}/${theme}`),
+        date: [year, month, day],
+        detail: {
+          selector: selector.replaceAll(/\s+/g, ""),
+          theme,
+        },
+      };
+    };
 
-        // eg:
-        // [
-        //   "<p><span style=\"font-size:18px\">江戸　雪 「記念日（テーマ） または自由」 7/7(木)　午後1時締切</span></p>",
-        //   "<p><span style=\"font-size:18px\">佐佐木　定綱 「焼　または自由」 7/7(木)　午後1時締切</span></p>"
-        // ]
-        const choices = enqueteData.questions[0][0].options.choices as unknown as string[];
-        return choices.map((choice): CrawlResult => {
-          choice = choice.replace(/<[^>]+>/g, "");
+    const crawlForm = async (formURL: string): Promise<TankaEvent<Detail>[]> => {
+      console.debug(`NHK: crawlForm ${formURL}`);
 
-          const match = /^(.+)「(.+?)(?:\s*または自由)?」\s*([0-9]+)\/([0-9]+)/.exec(choice);
-          if (!match) {
-            throw new Error(`Could not match: ${choice}`);
-          }
+      const text = await fetch(formURL)
+        .then((r) => r.text())
+        .then((t) => decodeHTML(t));
 
-          const [, selector, theme, m, d] = match;
-          const [year, month, day] = fixupYMD(parseInt(m), parseInt(d));
+      const matchHTML = /enquete_data = ({.+});$/m.exec(text);
+      if (!matchHTML) {
+        throw new Error(`Could not find enquete data: ${formURL}`);
+      }
 
-          return {
-            collection: `NHK短歌 ${selector}`,
-            date: [year, month, day],
-            key: this.generateKey(`nhk-tanka_${index++}`, [year, month, day]),
-            theme,
-            url: TOP_URL,
-          };
-        });
-      })
-    ).then((x) => x.flat());
-  }
-})();
+      const enqueteData = JSON.parse(matchHTML[1]);
+
+      // eg:
+      // [
+      //   "<p><span style=\"font-size:18px\">江戸　雪 「記念日（テーマ） または自由」 7/7(木)　午後1時締切</span></p>",
+      //   "<p><span style=\"font-size:18px\">佐佐木　定綱 「焼　または自由」 7/7(木)　午後1時締切</span></p>"
+      // ]
+      const choices = enqueteData.questions[0][0].options.choices as unknown as string[];
+      return Promise.all(choices.map(buildEvent));
+    };
+
+    return Promise.all([...matches].map(([, url]) => crawlForm(url))).then((x) => x.flat());
+  },
+
+  eventDetail({ detail }: TankaEvent<Detail>): { title: string; url: string } {
+    return {
+      title: `NHK短歌 ${detail.selector}『${detail.theme}』`,
+      url: this.homepage,
+    };
+  },
+};
+
+export default NHK短歌;

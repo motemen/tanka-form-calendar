@@ -1,33 +1,15 @@
-import addMonths from "date-fns/addMonths";
+export type EventTypeOf<S> = S extends TankaSite<infer D> ? TankaEvent<D> : never;
 
-export abstract class SiteBase {
-  public abstract readonly name: string;
-
-  public abstract readonly homepage: string;
-
-  protected generateKey(keyPrefix: string, [year, month]: [number, number, number]): string {
-    return `${keyPrefix}:${year}${month.toString().padStart(2, "0")}`;
-  }
-
-  protected generateKeys(keyPrefix: string): string[] {
-    let d = addMonths(Date.now(), +2);
-    const keys = <string[]>[];
-    for (let i = 0; i < 6; i++) {
-      keys.push(this.generateKey(keyPrefix, [d.getFullYear(), d.getMonth() + 1, d.getDate()]));
-      d = addMonths(d, -1);
-    }
-    return keys;
-  }
-
-  abstract keys(): string[];
-
-  abstract crawl(): Promise<CrawlResult[]>;
+export interface TankaSite<D extends Record<string, unknown>> {
+  key: string;
+  homepage: string;
+  name: string;
+  crawl(): Promise<TankaEvent<D>[]>;
+  eventDetail(event: TankaEvent<D>): { title: string; url: string };
 }
 
-export interface CrawlResult {
-  key: string;
+export interface TankaEvent<D extends Record<string, unknown> = Record<string, unknown>> {
   date: [number, number, number];
-  collection: string;
-  theme: string;
-  url: string;
+  key: string;
+  detail: D;
 }

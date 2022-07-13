@@ -11,8 +11,8 @@
  */
 
 import { SITES } from "./sites";
-import { CrawlResult } from "./sites/base";
-import ical from "ical-generator";
+import { EventTypeOf } from "./sites/base";
+import ical, { ICalCalendar } from "ical-generator";
 import { encode } from "html-entities";
 
 export interface Env {
@@ -22,6 +22,7 @@ export interface Env {
 
 const html = `<!DOCTYPE html>
 <head>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>投稿短歌カレンダー</title>
 </head>
 <body>
@@ -43,10 +44,40 @@ const html = `<!DOCTYPE html>
 </body>
 `;
 
+async function buildICal(kv: KVNamespace): Promise<ICalCalendar> {
+  const crawlResults = await Promise.all(
+    SITES.map(async (site) => {
+      const events = await kv.get<EventTypeOf<typeof site>[]>(`events:${site.key}`, { type: "json" });
+      return {
+        site,
+        events: events?.filter((ev): ev is NonNullable<typeof ev> => !!ev) ?? [],
+      };
+    })
+  );
+
+  const cal = ical({ name: "投稿短歌カレンダー", timezone: "Asia/Tokyo" });
+
+  crawlResults.forEach(({ site, events }) => {
+    console.log({ site, events });
+    events.forEach((event) => {
+      const { title, url } = site.eventDetail(event);
+      cal.createEvent({
+        id: `${site.key}-${event.key}@tanka-form-calendar.motemen.workers.dev`,
+        summary: title,
+        description: url,
+        start: new Date(event.date[0], event.date[1] - 1, event.date[2]),
+        allDay: true,
+        timezone: "Asia/Tokyo",
+      });
+    });
+  });
+
+  return cal;
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
-    console.log(JSON.stringify(env));
     if (url.pathname === "/_schedule") {
       if (url.searchParams.get("key") === env.SECRET_TOKEN) {
         await this.scheduled(null as unknown as ScheduledController, env, ctx);
@@ -57,24 +88,7 @@ export default {
     }
 
     if (url.pathname === "/calendar.ics") {
-      const keys = SITES.flatMap((site) => site.keys());
-      const entries = await Promise.all(keys.map((key) => env.STORE.get<CrawlResult>(key, { type: "json" })));
-      console.debug({ keys, entries });
-
-      const cal = ical({ name: "投稿短歌カレンダー", timezone: "Asia/Tokyo" });
-
-      entries.forEach((entry) => {
-        if (!entry) return null;
-
-        cal.createEvent({
-          summary: `${entry.collection}『${entry.theme}』`,
-          start: new Date(entry.date[0], entry.date[1] - 1, entry.date[2]),
-          allDay: true,
-          timezone: "Asia/Tokyo",
-          url: entry.url,
-          description: entry.url,
-        });
-      });
+      const cal = await buildICal(env.STORE);
 
       return new Response(cal.toString(), {
         headers: {
@@ -95,13 +109,11 @@ export default {
   },
 
   async scheduled(controller: ScheduledController, env: Env, _ctx: ExecutionContext): Promise<void> {
-    const results = await Promise.all(SITES.map((site) => site.crawl()));
-    console.debug(results);
     await Promise.all(
-      results.flat().map(async (result) => {
-        await env.STORE.put(result.key, JSON.stringify(result), {
-          expirationTtl: 3 * 30 * 24 * 60 * 60, // 3 months
-        });
+      SITES.map(async (site) => {
+        const events = await site.crawl();
+        await env.STORE.put(`events:${site.key}`, JSON.stringify(events));
+        console.log(`${site.name}: done`);
       })
     );
   },

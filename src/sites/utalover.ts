@@ -1,17 +1,19 @@
-import { CrawlResult, SiteBase } from "./base";
+import { computeDigest } from "../utils";
+import { TankaEvent, TankaSite } from "./base";
 
 const FORM_URL = "https://www.utalover.com/join/toko/form.html";
 
-export default new (class extends SiteBase {
-  override name = "うたらば";
+interface Detail extends Record<string, unknown> {
+  collection: "月刊うたらば" | "フリーペーパーうたらば";
+  theme: string;
+}
 
-  override homepage = "https://www.utalover.com/";
+const うたらば: TankaSite<Detail> = {
+  key: "utalover",
+  homepage: "https://www.utalover.com/",
+  name: "うたらば",
 
-  override keys(): string[] {
-    return [...this.generateKeys("utalover-monthly"), ...this.generateKeys("utalover-freepaper")];
-  }
-
-  async crawl(): Promise<CrawlResult[]> {
+  async crawl(): Promise<TankaEvent<Detail>[]> {
     const resp = await fetch(FORM_URL);
     const text = (await resp.text()).replace(/<[^>]+>/g, "");
 
@@ -25,20 +27,34 @@ export default new (class extends SiteBase {
       throw new Error("Could not parse free paper");
     }
 
-    const buildEntry = (match: RegExpMatchArray, collection: string, keyPrefix: string): CrawlResult => {
+    const buildEntry = async (
+      match: RegExpMatchArray,
+      collection: "月刊うたらば" | "フリーペーパーうたらば",
+      keyPrefix: string
+    ): Promise<TankaEvent<Detail>> => {
       const [year, month, day] = match.slice(2).map((n) => parseInt(n));
       return {
-        key: this.generateKey(keyPrefix, [year, month, day]),
-        collection,
-        theme: match[1],
+        key: await computeDigest(`${keyPrefix}/${year}-${month}-${day}`),
         date: [year, month, day],
-        url: FORM_URL,
+        detail: {
+          collection,
+          theme: match[1],
+        },
       };
     };
 
     return [
-      buildEntry(matchMonthly, "月刊うたらば", "utalover-monthly"),
-      buildEntry(matchFreepaper, "フリーペーパーうたらば", "utalover-freepaper"),
+      await buildEntry(matchMonthly, "月刊うたらば", "utalover-monthly"),
+      await buildEntry(matchFreepaper, "フリーペーパーうたらば", "utalover-freepaper"),
     ];
-  }
-})();
+  },
+
+  eventDetail({ detail }: TankaEvent<Detail>): { title: string; url: string } {
+    return {
+      title: `${detail.collection}『${detail.theme}』`,
+      url: this.homepage,
+    };
+  },
+};
+
+export default うたらば;
