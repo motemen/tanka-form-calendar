@@ -36,7 +36,7 @@ const html = `<!DOCTYPE html>
   </ul>
   <p>以下のURLをカレンダーアプリなどから利用してください。</p>
   <p><code>https://tanka-form-calendar.motemen.workers.dev/calendar.ics</code></p>
-  <p><iframe src="https://calendar.google.com/calendar/embed?src=gmd5lma3ot21h8theu8nqndp4emubcgp%40import.calendar.google.com&ctz=Asia%2FTokyo" style="border: 0" width="800" height="600" frameborder="0" scrolling="no"></iframe></p>
+  <p><iframe src="https://calendar.google.com/calendar/u/0/embed?src=0rfhaeq9n91cr7bt89ddbgfco1oeaqoq@import.calendar.google.com&amp;ctz=Asia/Tokyo" style="border: 0; max-width: 100%;" width="800" height="600" frameborder="0" scrolling="no"></iframe></p>
   <footer>
     <address>Author: <a href="https://twitter.com/@motemen" target="_blank">@motemen</a></address>
     <a href="https://github.com/motemen/tanka-form-calendar/issues/new" target="_blank">ご意見ご要望</a>
