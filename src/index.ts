@@ -20,7 +20,22 @@ export interface Env {
   SECRET_TOKEN: string;
 }
 
-const html = `<!DOCTYPE html>
+async function buildIndexHTML(kv: KVNamespace): Promise<string> {
+  const crawlResults = await Promise.all(
+    SITES.map(async (site) => {
+      const events = await kv.get<EventTypeOf<typeof site>[]>(
+        `events:${site.key}`,
+        { type: "json" }
+      );
+      return {
+        site,
+        events:
+          events?.filter((ev): ev is NonNullable<typeof ev> => !!ev) ?? [],
+      };
+    })
+  );
+
+  return `<!DOCTYPE html>
 <head>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>投稿短歌カレンダー</title>
@@ -30,9 +45,30 @@ const html = `<!DOCTYPE html>
   <p>インターネットで投稿できる短歌の締め切りを確認できるカレンダーです。</p>
   <p>現在、以下のサイトに対応しています:</p>
   <ul>
-  ${SITES.map((site) => `<li><a href="${encode(site.homepage)}" target="_blank">${encode(site.name)}</a></li>`).join(
-    "\n"
-  )}
+  ${crawlResults
+    .map(
+      ({ site, events }) => `
+      <li>
+        <strong><a href="${encode(site.homepage)}" target="_blank">${encode(
+        site.name
+      )}</a></strong>
+        <ul>
+          ${events
+            .map((ev) => ({ date: ev.date, ...site.eventDetail(ev) }))
+            .map(
+              ({ date, title, url }) => `
+            <li>
+              <a href="${encode(url)}" target="_blank">${encode(title)}</a>
+              ${date[0]}/${date[1]}/${date[2]}
+            </li>
+          `
+            )
+            .join("\n")}
+        </ul>
+      </li>
+    `
+    )
+    .join("\n")}
   </ul>
   <p>以下のURLをカレンダーアプリなどから利用してください。</p>
   <p><code>https://tanka-form-calendar.motemen.workers.dev/calendar.ics</code></p>
@@ -43,14 +79,19 @@ const html = `<!DOCTYPE html>
   </footer>
 </body>
 `;
+}
 
 async function buildICal(kv: KVNamespace): Promise<ICalCalendar> {
   const crawlResults = await Promise.all(
     SITES.map(async (site) => {
-      const events = await kv.get<EventTypeOf<typeof site>[]>(`events:${site.key}`, { type: "json" });
+      const events = await kv.get<EventTypeOf<typeof site>[]>(
+        `events:${site.key}`,
+        { type: "json" }
+      );
       return {
         site,
-        events: events?.filter((ev): ev is NonNullable<typeof ev> => !!ev) ?? [],
+        events:
+          events?.filter((ev): ev is NonNullable<typeof ev> => !!ev) ?? [],
       };
     })
   );
@@ -76,7 +117,11 @@ async function buildICal(kv: KVNamespace): Promise<ICalCalendar> {
 }
 
 export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext
+  ): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname === "/_schedule") {
       if (url.searchParams.get("key") === env.SECRET_TOKEN) {
@@ -102,13 +147,22 @@ export default {
     }
 
     if (url.pathname === "/") {
-      return new Response(html, { headers: { "Content-Type": "text/html" } });
+      return new Response(await buildIndexHTML(env.STORE), {
+        headers: { "Content-Type": "text/html" },
+      });
     }
 
-    return new Response("302 Found", { status: 302, headers: { Location: "/" } });
+    return new Response("302 Found", {
+      status: 302,
+      headers: { Location: "/" },
+    });
   },
 
-  async scheduled(controller: ScheduledController, env: Env, _ctx: ExecutionContext): Promise<void> {
+  async scheduled(
+    controller: ScheduledController,
+    env: Env,
+    _ctx: ExecutionContext
+  ): Promise<void> {
     await Promise.all(
       SITES.map(async (site) => {
         const events = await site.crawl();
