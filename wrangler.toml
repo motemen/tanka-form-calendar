@@ -1,5 +1,5 @@
 name = "tanka-form-calendar"
-main = "src/index.ts"
+main = "src/index.tsx"
 compatibility_date = "2022-06-28"
 
 kv_namespaces = [
