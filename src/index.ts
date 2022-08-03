@@ -36,6 +36,7 @@ async function buildIndexHTML(kv: KVNamespace): Promise<string> {
   );
 
   return `<!DOCTYPE html>
+<html lang="ja">
 <head>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>投稿短歌カレンダー</title>
@@ -78,6 +79,7 @@ async function buildIndexHTML(kv: KVNamespace): Promise<string> {
     <a href="https://github.com/motemen/tanka-form-calendar/issues/new" target="_blank">ご意見ご要望</a>
   </footer>
 </body>
+</html>
 `;
 }
 
