@@ -1,0 +1,54 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`nhk-tanka crawl 1`] = `
+Array [
+  Object {
+    "date": Array [
+      2022,
+      7,
+      7,
+    ],
+    "detail": Object {
+      "selector": "江戸雪",
+      "theme": "記念日（テーマ）",
+    },
+    "key": "55ac6f0ef2dd0761633cfabd5b889956",
+  },
+  Object {
+    "date": Array [
+      2022,
+      7,
+      7,
+    ],
+    "detail": Object {
+      "selector": "佐佐木定綱",
+      "theme": "焼",
+    },
+    "key": "6743ecace15a63e4cd2f26083b7723ae",
+  },
+  Object {
+    "date": Array [
+      2022,
+      7,
+      21,
+    ],
+    "detail": Object {
+      "selector": "栗木京子",
+      "theme": "カラオケ（テーマ）",
+    },
+    "key": "6d8c704538fda40cd08e626d65439bb5",
+  },
+  Object {
+    "date": Array [
+      2022,
+      7,
+      21,
+    ],
+    "detail": Object {
+      "selector": "笹公人",
+      "theme": "魚料理（テーマ）",
+    },
+    "key": "983313961de111f25b67e6773b3d4dfc",
+  },
+]
+`;

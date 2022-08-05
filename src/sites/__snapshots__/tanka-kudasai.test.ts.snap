@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`tanka-kudasai crawl 1`] = `
+Array [
+  Object {
+    "date": Array [
+      2022,
+      6,
+      30,
+    ],
+    "detail": Object {
+      "theme": "ぴょんぴょん",
+    },
+    "key": "7b83cf9e07e56e588064761b5eec978a",
+  },
+]
+`;

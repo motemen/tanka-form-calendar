@@ -3,25 +3,7 @@ import うたらば from "./utalover";
 describe("utalover", () => {
   it("crawl", async () => {
     const events = await うたらば.crawl();
-    expect(events).toHaveLength(2);
-    expect(events).toEqual([
-      {
-        key: expect.any(String),
-        date: [2022, 7, 2],
-        detail: {
-          collection: "月刊うたらば",
-          theme: "会",
-        },
-      },
-      {
-        key: expect.any(String),
-        date: [2022, 7, 23],
-        detail: {
-          collection: "フリーペーパーうたらば",
-          theme: "飲み物",
-        },
-      },
-    ]);
+    expect(events).toMatchSnapshot();
 
     expect(new Set(events.map((r) => うたらば.eventDetail(r)))).toEqual(
       new Set([

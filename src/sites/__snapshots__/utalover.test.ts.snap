@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`utalover crawl 1`] = `
+Array [
+  Object {
+    "date": Array [
+      2022,
+      7,
+      2,
+    ],
+    "detail": Object {
+      "collection": "月刊うたらば",
+      "theme": "会",
+    },
+    "key": "9fda14704cbec22d3dac46a1273574a3",
+  },
+  Object {
+    "date": Array [
+      2022,
+      7,
+      23,
+    ],
+    "detail": Object {
+      "collection": "フリーペーパーうたらば",
+      "theme": "飲み物",
+    },
+    "key": "d4c4ed1eec3ed328f9d5db39cb17f9ee",
+  },
+]
+`;
